@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileText, Upload, LogIn } from "lucide-react"
 import Link from "next/link"
 import { getUserUploads } from "./actions/upload-actions"
-import { getServerSession } from "next-auth/next"
+import { getSession } from "@/lib/auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default async function Home({
@@ -14,10 +14,10 @@ export default async function Home({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const tab = searchParams.tab === "note" ? "note" : "file"
-  const session = await getServerSession()
+  const session = await getSession()
 
   // If user is logged in, get their uploads
-  const { files = [], notes = [] } = session?.user ? await getUserUploads() : { files: [], notes: [] }
+  const { files = [], notes = [] } = session ? await getUserUploads() : { files: [], notes: [] }
 
   // Get the most recent uploads (up to 2)
   const recentFiles = files.slice(0, 2)
@@ -32,7 +32,7 @@ export default async function Home({
       </div>
 
       <div className="max-w-3xl mx-auto">
-        {session?.user ? (
+        {session ? (
           <>
             <Tabs defaultValue={tab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-8">

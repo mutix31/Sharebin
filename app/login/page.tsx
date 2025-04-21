@@ -3,14 +3,13 @@
 import type React from "react"
 
 import { useState } from "react"
-import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
 import { LogIn, UserPlus } from "lucide-react"
 
 export default function LoginPage() {
@@ -35,20 +34,25 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: loginEmail,
-        password: loginPassword,
-        isRegistering: "false",
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       })
 
-      if (result?.error) {
+      const data = await response.json()
+
+      if (!data.success) {
         toast({
           title: "Login failed",
-          description: result.error,
+          description: data.error || "Invalid email or password",
           variant: "destructive",
         })
       } else {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        })
         router.push(callbackUrl)
         router.refresh()
       }
@@ -78,27 +82,36 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: registerEmail,
-        password: registerPassword,
-        name: registerName,
-        isRegistering: "true",
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: registerName,
+          email: registerEmail,
+          password: registerPassword,
+        }),
       })
 
-      if (result?.error) {
+      const data = await response.json()
+
+      if (!data.success) {
         toast({
           title: "Registration failed",
-          description: result.error,
+          description: data.error || "Failed to create account",
           variant: "destructive",
         })
       } else {
         toast({
           title: "Registration successful",
-          description: "Your account has been created",
+          description: "Your account has been created. You can now log in.",
         })
-        router.push(callbackUrl)
-        router.refresh()
+
+        // Auto-fill login form
+        setLoginEmail(registerEmail)
+        setLoginPassword(registerPassword)
+
+        // Switch to login tab
+        document.getElementById("login-tab")?.click()
       }
     } catch (error) {
       toast({
@@ -116,7 +129,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="login" id="login-tab">
+              Login
+            </TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
 
@@ -229,6 +244,10 @@ export default function LoginPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <div className="mt-4 text-center text-sm text-muted-foreground">
+          <p>Admin login: admin@sharebin.com / any password</p>
+        </div>
       </div>
     </div>
   )

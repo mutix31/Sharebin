@@ -3,8 +3,12 @@ import { FileIcon, FileText, Users, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { getAllUploads, getAllUsers } from "@/app/actions/upload-actions"
 import { DeleteButton } from "@/components/delete-button"
+import { requireAdmin } from "@/lib/auth"
 
 export default async function AdminPage() {
+  // This will redirect if not admin
+  await requireAdmin()
+
   const { files, notes } = await getAllUploads()
   const usersResult = await getAllUsers()
   const users = usersResult.success ? usersResult.users : []

@@ -4,11 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileIcon, FileText, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { getUserUploads } from "@/app/actions/upload-actions"
-import { getServerSession } from "next-auth/next"
 import { DeleteButton } from "@/components/delete-button"
+import { requireAuth } from "@/lib/auth"
 
 export default async function DashboardPage() {
-  const session = await getServerSession()
+  const session = await requireAuth()
   const { files, notes } = await getUserUploads()
 
   return (
@@ -16,7 +16,7 @@ export default async function DashboardPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Uploads</h1>
         <p className="text-muted-foreground">
-          Welcome, {session?.user?.name || session?.user?.email}. View and manage your uploaded files and notes.
+          Welcome, {session.name || session.email}. View and manage your uploaded files and notes.
         </p>
       </div>
 

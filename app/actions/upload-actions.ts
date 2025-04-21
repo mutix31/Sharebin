@@ -2,17 +2,16 @@
 
 import { put, list, del } from "@vercel/blob"
 import { revalidatePath } from "next/cache"
-import { generateId } from "@/lib/auth"
-import { getServerSession } from "next-auth/next"
+import { generateId, getSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
 
 // Function to upload a file to Vercel Blob
 export async function uploadFile(file: File) {
   try {
     // Get the current user session
-    const session = await getServerSession()
+    const session = await getSession()
 
-    if (!session?.user) {
+    if (!session) {
       return {
         success: false,
         error: "You must be logged in to upload files",
@@ -44,8 +43,8 @@ export async function uploadFile(file: File) {
       size: file.size,
       type: file.type,
       createdAt: new Date().toISOString(),
-      userId: session.user.id,
-      userEmail: session.user.email,
+      userId: session.userId,
+      userEmail: session.email,
     }
 
     // Store metadata in Blob as well
@@ -80,9 +79,9 @@ export async function uploadFile(file: File) {
 export async function createNote({ title, content }: { title: string; content: string }) {
   try {
     // Get the current user session
-    const session = await getServerSession()
+    const session = await getSession()
 
-    if (!session?.user) {
+    if (!session) {
       return {
         success: false,
         error: "You must be logged in to create notes",
@@ -98,8 +97,8 @@ export async function createNote({ title, content }: { title: string; content: s
       title,
       content,
       createdAt: new Date().toISOString(),
-      userId: session.user.id,
-      userEmail: session.user.email,
+      userId: session.userId,
+      userEmail: session.email,
     }
 
     // Convert to JSON string
@@ -135,14 +134,14 @@ export async function createNote({ title, content }: { title: string; content: s
 export async function getUserUploads() {
   try {
     // Get the current user session
-    const session = await getServerSession()
+    const session = await getSession()
 
-    if (!session?.user) {
+    if (!session) {
       redirect("/login")
     }
 
     const { blobs } = await list()
-    const isAdmin = session.user.role === "admin"
+    const isAdmin = session.role === "admin"
 
     const files = []
     const notes = []
@@ -154,7 +153,7 @@ export async function getUserUploads() {
           const metadata = await response.json()
 
           // Only include files owned by the current user (or all files for admin)
-          if (isAdmin || metadata.userId === session.user.id) {
+          if (isAdmin || metadata.userId === session.userId) {
             files.push(metadata)
           }
         } catch (error) {
@@ -166,7 +165,7 @@ export async function getUserUploads() {
           const noteData = await response.json()
 
           // Only include notes owned by the current user (or all notes for admin)
-          if (isAdmin || noteData.userId === session.user.id) {
+          if (isAdmin || noteData.userId === session.userId) {
             notes.push(noteData)
           }
         } catch (error) {
@@ -190,14 +189,14 @@ export async function getUserUploads() {
 export async function getAllUploads() {
   try {
     // Get the current user session
-    const session = await getServerSession()
+    const session = await getSession()
 
-    if (!session?.user) {
+    if (!session) {
       redirect("/login")
     }
 
     // Regular users get their own uploads
-    if (session.user.role !== "admin") {
+    if (session.role !== "admin") {
       return getUserUploads()
     }
 
@@ -277,13 +276,13 @@ export async function getNoteById(id: string) {
   }
 }
 
-// Function to delete a file (admin only)
+// Function to delete a file
 export async function deleteFile(id: string) {
   try {
     // Get the current user session
-    const session = await getServerSession()
+    const session = await getSession()
 
-    if (!session?.user) {
+    if (!session) {
       return {
         success: false,
         error: "You must be logged in to delete files",
@@ -300,7 +299,7 @@ export async function deleteFile(id: string) {
     }
 
     // Check if user is authorized to delete this file
-    if (session.user.role !== "admin" && fileData.userId !== session.user.id) {
+    if (session.role !== "admin" && fileData.userId !== session.userId) {
       return {
         success: false,
         error: "You are not authorized to delete this file",
@@ -333,13 +332,13 @@ export async function deleteFile(id: string) {
   }
 }
 
-// Function to delete a note (admin only)
+// Function to delete a note
 export async function deleteNote(id: string) {
   try {
     // Get the current user session
-    const session = await getServerSession()
+    const session = await getSession()
 
-    if (!session?.user) {
+    if (!session) {
       return {
         success: false,
         error: "You must be logged in to delete notes",
@@ -356,7 +355,7 @@ export async function deleteNote(id: string) {
     }
 
     // Check if user is authorized to delete this note
-    if (session.user.role !== "admin" && noteData.userId !== session.user.id) {
+    if (session.role !== "admin" && noteData.userId !== session.userId) {
       return {
         success: false,
         error: "You are not authorized to delete this note",
@@ -386,9 +385,9 @@ export async function deleteNote(id: string) {
 export async function getAllUsers() {
   try {
     // Get the current user session
-    const session = await getServerSession()
+    const session = await getSession()
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session || session.role !== "admin") {
       return {
         success: false,
         error: "You are not authorized to access user data",

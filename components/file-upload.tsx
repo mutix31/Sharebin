@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/components/ui/use-toast"
 import { Upload, X, FileIcon, Check } from "lucide-react"
 import { uploadFile } from "@/app/actions/upload-actions"
+import { useRouter } from "next/navigation"
 
 export function FileUpload() {
   const [file, setFile] = useState<File | null>(null)
@@ -17,6 +18,7 @@ export function FileUpload() {
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const router = useRouter()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -80,10 +82,19 @@ export function FileUpload() {
 
       if (result.success) {
         setFileUrl(result.url)
+
+        // Store file ID in localStorage
+        const myUploads = JSON.parse(localStorage.getItem("myUploads") || '{"files":[],"notes":[]}')
+        myUploads.files.push(result.id)
+        localStorage.setItem("myUploads", JSON.stringify(myUploads))
+
         toast({
           title: "Upload successful",
           description: "Your file has been uploaded successfully",
         })
+
+        // Refresh the dashboard to show the new file
+        router.refresh()
       } else {
         throw new Error(result.error || "Upload failed")
       }
@@ -164,7 +175,7 @@ export function FileUpload() {
                   <Button
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(fileUrl)
+                      navigator.clipboard.writeText(`${window.location.origin}${fileUrl}`)
                       toast({ title: "Link copied to clipboard" })
                     }}
                   >
@@ -173,9 +184,7 @@ export function FileUpload() {
                 </div>
                 <div className="flex gap-2">
                   <Button className="w-full" asChild>
-                    <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                      View File
-                    </a>
+                    <a href={fileUrl}>View File</a>
                   </Button>
                   <Button variant="outline" onClick={resetUpload}>
                     Upload Another

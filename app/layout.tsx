@@ -3,6 +3,7 @@ import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/navbar"
 import { Toaster } from "@/components/ui/toaster"
+import { SessionProvider } from "@/components/session-provider"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -19,20 +20,22 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="relative flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <footer className="border-t py-6">
-              <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
-                <p className="text-center text-sm text-muted-foreground">
-                  &copy; {new Date().getFullYear()} ShareBin. All rights reserved.
-                </p>
-              </div>
-            </footer>
-          </div>
-          <Toaster />
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <div className="relative flex min-h-screen flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <footer className="border-t py-6">
+                <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
+                  <p className="text-center text-sm text-muted-foreground">
+                    &copy; {new Date().getFullYear()} ShareBin. All rights reserved.
+                  </p>
+                </div>
+              </footer>
+            </div>
+            <Toaster />
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   )

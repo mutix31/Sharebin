@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { createNote } from "@/app/actions/upload-actions"
+import { useRouter } from "next/navigation"
 
 export function NoteCreator() {
   const [title, setTitle] = useState("")
@@ -15,6 +16,7 @@ export function NoteCreator() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [noteUrl, setNoteUrl] = useState<string | null>(null)
   const { toast } = useToast()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,10 +37,19 @@ export function NoteCreator() {
 
       if (result.success) {
         setNoteUrl(result.url)
+
+        // Store note ID in localStorage
+        const myUploads = JSON.parse(localStorage.getItem("myUploads") || '{"files":[],"notes":[]}')
+        myUploads.notes.push(result.noteId)
+        localStorage.setItem("myUploads", JSON.stringify(myUploads))
+
         toast({
           title: "Note created",
           description: "Your note has been created successfully",
         })
+
+        // Refresh the dashboard to show the new note
+        router.refresh()
       } else {
         throw new Error(result.error || "Failed to create note")
       }
@@ -95,7 +106,7 @@ export function NoteCreator() {
             <Button
               size="sm"
               onClick={() => {
-                navigator.clipboard.writeText(noteUrl)
+                navigator.clipboard.writeText(`${window.location.origin}${noteUrl}`)
                 toast({ title: "Link copied to clipboard" })
               }}
             >
@@ -104,9 +115,7 @@ export function NoteCreator() {
           </div>
           <div className="flex gap-2">
             <Button className="w-full" asChild>
-              <a href={noteUrl} target="_blank" rel="noopener noreferrer">
-                View Note
-              </a>
+              <a href={noteUrl}>View Note</a>
             </Button>
             <Button variant="outline" onClick={resetForm}>
               Create Another

@@ -1,38 +1,19 @@
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Copy, Share2 } from "lucide-react"
+import { Share2 } from "lucide-react"
 import Link from "next/link"
-
-// This would be replaced with actual data fetching in a real implementation
-async function getNoteData(id: string) {
-  // Simulate fetching note data
-  // In a real app, this would fetch from Vercel Blob or a database
-
-  // For demo purposes, return mock data
-  if (id === "example-note-id") {
-    return {
-      id: "example-note-id",
-      title: "My Code Snippet",
-      content: `function helloWorld() {
-  console.log("Hello, world!");
-}
-
-// Call the function
-helloWorld();`,
-      createdAt: new Date().toISOString(),
-    }
-  }
-
-  return null
-}
+import { getNoteById } from "@/app/actions/upload-actions"
+import { CopyButton } from "@/components/copy-button"
 
 export default async function ViewNotePage({ params }: { params: { id: string } }) {
-  const noteData = await getNoteData(params.id)
+  const noteData = await getNoteById(params.id)
 
   if (!noteData) {
     notFound()
   }
+
+  const shareUrl = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/note/${noteData.id}`
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,19 +37,21 @@ export default async function ViewNotePage({ params }: { params: { id: string } 
                 </pre>
               </div>
 
-              <div className="text-sm">
-                <p className="text-muted-foreground">Created</p>
-                <p className="font-medium">{new Date(noteData.createdAt).toLocaleString()}</p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Created</p>
+                  <p className="font-medium">{new Date(noteData.createdAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Created By</p>
+                  <p className="font-medium truncate">{noteData.userEmail || "Anonymous"}</p>
+                </div>
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between gap-4">
-            <Button className="w-full" variant="outline">
-              <Copy className="mr-2 h-4 w-4" /> Copy Content
-            </Button>
-            <Button className="w-full">
-              <Share2 className="mr-2 h-4 w-4" /> Share Note
-            </Button>
+            <CopyButton text={noteData.content} label="Copy Content" variant="outline" className="w-full" />
+            <CopyButton text={shareUrl} label="Share Note" className="w-full" />
           </CardFooter>
         </Card>
       </div>

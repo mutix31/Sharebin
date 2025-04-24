@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
-import { FileText, Upload, User, LogOut, Shield } from "lucide-react"
+import { FileText, Upload, User, LogOut, Shield, LinkIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,13 +52,13 @@ export function Navbar() {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
       setSession({ authenticated: false })
-      toast({ title: "Logged out successfully" })
+      toast({ title: "Başarıyla çıkış yapıldı" })
       router.push("/")
       router.refresh()
     } catch (error) {
       toast({
-        title: "Logout failed",
-        description: "An error occurred during logout",
+        title: "Çıkış başarısız",
+        description: "Çıkış yaparken bir hata oluştu",
         variant: "destructive",
       })
     }
@@ -66,6 +66,10 @@ export function Navbar() {
 
   const isAuthenticated = session?.authenticated
   const isAdmin = session?.user?.role === "admin"
+  const isVip = session?.user?.role === "vip"
+
+  // Kullanıcı adı için email yerine name kullanılıyor
+  const displayName = session?.user?.name || session?.user?.email?.split("@")[0] || "Kullanıcı"
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -80,17 +84,25 @@ export function Navbar() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/" className="flex items-center gap-1">
                 <Upload className="h-4 w-4" />
-                <span>Upload</span>
+                <span>Yükle</span>
               </Link>
             </Button>
 
             {isAuthenticated && (
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard" className="flex items-center gap-1">
-                  <FileText className="h-4 w-4" />
-                  <span>My Files</span>
-                </Link>
-              </Button>
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/dashboard" className="flex items-center gap-1">
+                    <FileText className="h-4 w-4" />
+                    <span>Dosyalarım</span>
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/?tab=url" className="flex items-center gap-1">
+                    <LinkIcon className="h-4 w-4" />
+                    <span>URL Kısalt</span>
+                  </Link>
+                </Button>
+              </>
             )}
 
             {isAdmin && (
@@ -111,30 +123,34 @@ export function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="flex items-center gap-1">
                     <User className="h-4 w-4" />
-                    <span>{session.user?.name || session.user?.email}</span>
+                    <span className="max-w-[150px] truncate">{displayName}</span>
+                    {isVip && <span className="ml-1 text-xs bg-amber-100 text-amber-800 px-1 rounded">VIP</span>}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{isAdmin ? "Admin Account" : "My Account"}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{isAdmin ? "Admin Hesabı" : isVip ? "VIP Hesap" : "Hesabım"}</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Profil Ayarları</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard">My Files</Link>
+                    <Link href="/dashboard">Dosyalarım</Link>
                   </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem asChild>
-                      <Link href="/admin">Admin Dashboard</Link>
+                      <Link href="/admin">Admin Paneli</Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>Çıkış Yap</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Button size="sm" asChild>
-                <Link href="/login">Login</Link>
+                <Link href="/login">Giriş Yap</Link>
               </Button>
             )}
           </nav>

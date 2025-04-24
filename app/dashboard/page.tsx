@@ -1,15 +1,17 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileIcon, FileText, Trash2 } from "lucide-react"
-import Link from "next/link"
-import { getUserUploads } from "@/app/actions/upload-actions"
+import { FileIcon, FileText, Trash2, Link } from "lucide-react"
+import NextLink from "next/link"
+import { getUserUploads, getUserShortUrls } from "@/app/actions/upload-actions"
 import { DeleteButton } from "@/components/delete-button"
 import { requireAuth } from "@/lib/auth"
 
 export default async function DashboardPage() {
   const session = await requireAuth()
   const { files, notes } = await getUserUploads()
+  const urlsResult = await getUserShortUrls()
+  const urls = urlsResult.success ? urlsResult.urls : []
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -22,7 +24,7 @@ export default async function DashboardPage() {
 
       <div className="max-w-5xl mx-auto">
         <Tabs defaultValue="files" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="files" className="flex items-center gap-2">
               <FileIcon className="h-4 w-4" />
               Files ({files.length})
@@ -30,6 +32,10 @@ export default async function DashboardPage() {
             <TabsTrigger value="notes" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Notes ({notes.length})
+            </TabsTrigger>
+            <TabsTrigger value="urls" className="flex items-center gap-2">
+              <Link className="h-4 w-4" />
+              URLs ({urls.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="files">
@@ -39,7 +45,7 @@ export default async function DashboardPage() {
                   <Card key={file.id} className="h-full">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <Link href={`/view/${file.id}`} className="flex items-center gap-3 flex-1">
+                        <NextLink href={`/view/${file.id}`} className="flex items-center gap-3 flex-1">
                           <div className="bg-muted rounded-lg p-2">
                             <FileIcon className="h-6 w-6" />
                           </div>
@@ -50,7 +56,7 @@ export default async function DashboardPage() {
                               {new Date(file.createdAt).toLocaleDateString()}
                             </p>
                           </div>
-                        </Link>
+                        </NextLink>
                         <DeleteButton id={file.id} type="file">
                           <Trash2 className="h-4 w-4" />
                         </DeleteButton>
@@ -63,7 +69,7 @@ export default async function DashboardPage() {
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">No files uploaded yet</p>
                 <Button asChild>
-                  <Link href="/?tab=file">Upload Your First File</Link>
+                  <NextLink href="/?tab=file">Upload Your First File</NextLink>
                 </Button>
               </div>
             )}
@@ -75,7 +81,7 @@ export default async function DashboardPage() {
                   <Card key={note.id} className="h-full">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <Link href={`/note/${note.id}`} className="flex items-center gap-3 flex-1">
+                        <NextLink href={`/note/${note.id}`} className="flex items-center gap-3 flex-1">
                           <div className="bg-muted rounded-lg p-2">
                             <FileText className="h-6 w-6" />
                           </div>
@@ -85,7 +91,7 @@ export default async function DashboardPage() {
                               Created {new Date(note.createdAt).toLocaleDateString()}
                             </p>
                           </div>
-                        </Link>
+                        </NextLink>
                         <DeleteButton id={note.id} type="note">
                           <Trash2 className="h-4 w-4" />
                         </DeleteButton>
@@ -98,7 +104,56 @@ export default async function DashboardPage() {
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">No notes created yet</p>
                 <Button asChild>
-                  <Link href="/?tab=note">Create Your First Note</Link>
+                  <NextLink href="/?tab=note">Create Your First Note</NextLink>
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="urls">
+            {urls.length > 0 ? (
+              <div className="space-y-4">
+                <div className="rounded-md border">
+                  <div className="p-4 bg-muted/50">
+                    <div className="grid grid-cols-12 font-medium">
+                      <div className="col-span-5">Kısa URL</div>
+                      <div className="col-span-5">Orijinal URL</div>
+                      <div className="col-span-2">Ziyaretler</div>
+                    </div>
+                  </div>
+                  <div className="divide-y">
+                    {urls.map((url) => (
+                      <div key={url.id} className="p-4 grid grid-cols-12 items-center">
+                        <div className="col-span-5 truncate">
+                          <a
+                            href={`/u/${url.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline text-primary"
+                          >
+                            {`${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/u/${url.id}`}
+                          </a>
+                        </div>
+                        <div className="col-span-5 truncate">
+                          <a
+                            href={url.originalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline text-muted-foreground"
+                          >
+                            {url.originalUrl}
+                          </a>
+                        </div>
+                        <div className="col-span-2 text-sm">{url.visits} ziyaret</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">Henüz kısaltılmış URL yok</p>
+                <Button asChild>
+                  <NextLink href="/?tab=url">İlk URL'nizi Kısaltın</NextLink>
                 </Button>
               </div>
             )}
@@ -113,16 +168,22 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild className="flex-1">
-                <Link href="/?tab=file">
+                <NextLink href="/?tab=file">
                   <FileIcon className="mr-2 h-4 w-4" />
-                  Upload File
-                </Link>
+                  Dosya Yükle
+                </NextLink>
+              </Button>
+              <Button asChild variant="secondary" className="flex-1">
+                <NextLink href="/?tab=note">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Not Oluştur
+                </NextLink>
               </Button>
               <Button asChild variant="outline" className="flex-1">
-                <Link href="/?tab=note">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Create Note
-                </Link>
+                <NextLink href="/?tab=url">
+                  <Link className="mr-2 h-4 w-4" />
+                  URL Kısalt
+                </NextLink>
               </Button>
             </CardContent>
           </Card>

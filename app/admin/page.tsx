@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileIcon, FileText, Users, Trash2 } from "lucide-react"
-import Link from "next/link"
+import NextLink from "next/link"
 import { getAllUploads, getAllUsers } from "@/app/actions/upload-actions"
 import { DeleteButton } from "@/components/delete-button"
 import { requireAdmin } from "@/lib/auth"
+import { EditUserButton } from "@/components/edit-user-button"
 
 export default async function AdminPage() {
   // This will redirect if not admin
@@ -52,13 +53,13 @@ export default async function AdminPage() {
                 {files.map((file) => (
                   <div key={file.id} className="p-4 grid grid-cols-12 items-center">
                     <div className="col-span-4 truncate">
-                      <Link href={`/view/${file.id}`} className="hover:underline flex items-center gap-2">
+                      <NextLink href={`/view/${file.id}`} className="hover:underline flex items-center gap-2">
                         <FileIcon className="h-4 w-4" />
                         {file.name}
-                      </Link>
+                      </NextLink>
                     </div>
                     <div className="col-span-3 truncate text-sm text-muted-foreground">
-                      {file.userEmail || "Anonymous"}
+                      {file.userName || "Anonymous"}
                     </div>
                     <div className="col-span-2 text-sm">{(file.size / (1024 * 1024)).toFixed(2)} MB</div>
                     <div className="col-span-2 text-sm text-muted-foreground">
@@ -90,13 +91,13 @@ export default async function AdminPage() {
                 {notes.map((note) => (
                   <div key={note.id} className="p-4 grid grid-cols-12 items-center">
                     <div className="col-span-4 truncate">
-                      <Link href={`/note/${note.id}`} className="hover:underline flex items-center gap-2">
+                      <NextLink href={`/note/${note.id}`} className="hover:underline flex items-center gap-2">
                         <FileText className="h-4 w-4" />
                         {note.title}
-                      </Link>
+                      </NextLink>
                     </div>
                     <div className="col-span-3 truncate text-sm text-muted-foreground">
-                      {note.userEmail || "Anonymous"}
+                      {note.userName || "Anonymous"}
                     </div>
                     <div className="col-span-4 text-sm text-muted-foreground">
                       {new Date(note.createdAt).toLocaleDateString()}
@@ -120,7 +121,8 @@ export default async function AdminPage() {
                   <div className="col-span-3">Name</div>
                   <div className="col-span-4">Email</div>
                   <div className="col-span-2">Role</div>
-                  <div className="col-span-3">Joined</div>
+                  <div className="col-span-2">Joined</div>
+                  <div className="col-span-1">Actions</div>
                 </div>
               </div>
               <div className="divide-y">
@@ -131,14 +133,21 @@ export default async function AdminPage() {
                     <div className="col-span-2">
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
-                          user.role === "admin" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"
+                          user.role === "admin"
+                            ? "bg-red-100 text-red-800"
+                            : user.role === "vip"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-blue-100 text-blue-800"
                         }`}
                       >
                         {user.role}
                       </span>
                     </div>
-                    <div className="col-span-3 text-sm text-muted-foreground">
+                    <div className="col-span-2 text-sm text-muted-foreground">
                       {new Date(user.createdAt).toLocaleDateString()}
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      <EditUserButton user={user} />
                     </div>
                   </div>
                 ))}

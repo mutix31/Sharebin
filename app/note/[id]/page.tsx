@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Share2 } from "lucide-react"
+import { Share2, Clock, Eye } from "lucide-react"
 import Link from "next/link"
 import { getNoteById } from "@/app/actions/upload-actions"
 import { CopyButton } from "@/components/copy-button"
@@ -9,11 +9,22 @@ import { CopyButton } from "@/components/copy-button"
 export default async function ViewNotePage({ params }: { params: { id: string } }) {
   const noteData = await getNoteById(params.id)
 
+  // Içerik süresi dolmuş veya görüntüleme limiti aşılmış
+  if (noteData && noteData.expired) {
+    const reason = noteData.error === "This content has expired" ? "expired" : "limit"
+    redirect(`/expired?reason=${reason}`)
+  }
+
   if (!noteData) {
     notFound()
   }
 
   const shareUrl = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/note/${noteData.id}`
+
+  // Süre ve görüntüleme bilgileri
+  const expiresAt = noteData.expiresAt ? new Date(noteData.expiresAt) : null
+  const viewLimit = noteData.viewLimit
+  const viewCount = noteData.viewCount || 0
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -44,7 +55,27 @@ export default async function ViewNotePage({ params }: { params: { id: string } 
                 </div>
                 <div>
                   <p className="text-muted-foreground">Created By</p>
-                  <p className="font-medium truncate">{noteData.userEmail || "Anonymous"}</p>
+                  <p className="font-medium truncate">{noteData.userName || "Anonymous"}</p>
+                </div>
+              </div>
+
+              {/* Süre ve görüntüleme limiti bilgisi */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      {expiresAt
+                        ? `Bu içerik ${expiresAt.toLocaleDateString()} tarihinde sona erecek`
+                        : "Bu içeriğin süresi bulunmuyor"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      {viewLimit ? `${viewCount}/${viewLimit} görüntüleme` : `${viewCount} görüntüleme`}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

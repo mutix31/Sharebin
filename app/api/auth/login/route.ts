@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
         email: result.user.email,
         role: result.user.role,
       },
+      redirectUrl: "/dashboard", // Login sonrası yönlendirilecek URL
     })
   } catch (error) {
     console.error("Login error:", error)

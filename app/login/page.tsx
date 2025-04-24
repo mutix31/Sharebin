@@ -11,26 +11,30 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { LogIn, UserPlus } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/"
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
   const { toast } = useToast()
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   // Register form state
   const [registerName, setRegisterName] = useState("")
   const [registerEmail, setRegisterEmail] = useState("")
   const [registerPassword, setRegisterPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [registerError, setRegisterError] = useState<string | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoginError(null)
     setIsLoading(true)
 
     try {
@@ -43,25 +47,19 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (!data.success) {
-        toast({
-          title: "Login failed",
-          description: data.error || "Invalid email or password",
-          variant: "destructive",
-        })
+        setLoginError(data.error || "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.")
       } else {
         toast({
-          title: "Login successful",
-          description: "Welcome back!",
+          title: "Giriş başarılı",
+          description: "Hoş geldiniz!",
         })
-        router.push(callbackUrl)
+
+        // Başarılı girişten sonra yönlendirme
+        router.push(data.redirectUrl || callbackUrl)
         router.refresh()
       }
     } catch (error) {
-      toast({
-        title: "Login failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
+      setLoginError("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.")
     } finally {
       setIsLoading(false)
     }
@@ -69,13 +67,10 @@ export default function LoginPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    setRegisterError(null)
 
     if (registerPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
-        variant: "destructive",
-      })
+      setRegisterError("Şifreler eşleşmiyor. Lütfen kontrol edin.")
       return
     }
 
@@ -95,15 +90,11 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (!data.success) {
-        toast({
-          title: "Registration failed",
-          description: data.error || "Failed to create account",
-          variant: "destructive",
-        })
+        setRegisterError(data.error || "Kayıt başarısız. Lütfen bilgilerinizi kontrol edin.")
       } else {
         toast({
-          title: "Registration successful",
-          description: "Your account has been created. You can now log in.",
+          title: "Kayıt başarılı",
+          description: "Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.",
         })
 
         // Auto-fill login form
@@ -114,11 +105,7 @@ export default function LoginPage() {
         document.getElementById("login-tab")?.click()
       }
     } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
+      setRegisterError("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.")
     } finally {
       setIsLoading(false)
     }
@@ -130,19 +117,24 @@ export default function LoginPage() {
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login" id="login-tab">
-              Login
+              Giriş
             </TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
+            <TabsTrigger value="register">Kayıt Ol</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
             <Card>
               <CardHeader>
-                <CardTitle>Login</CardTitle>
-                <CardDescription>Enter your credentials to access your account</CardDescription>
+                <CardTitle>Giriş</CardTitle>
+                <CardDescription>Hesabınıza erişmek için bilgilerinizi girin</CardDescription>
               </CardHeader>
               <form onSubmit={handleLogin}>
                 <CardContent className="space-y-4">
+                  {loginError && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{loginError}</AlertDescription>
+                    </Alert>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
                     <Input
@@ -155,7 +147,7 @@ export default function LoginPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <Label htmlFor="login-password">Şifre</Label>
                     <Input
                       id="login-password"
                       type="password"
@@ -168,10 +160,10 @@ export default function LoginPage() {
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (
-                      "Logging in..."
+                      "Giriş yapılıyor..."
                     ) : (
                       <>
-                        <LogIn className="mr-2 h-4 w-4" /> Login
+                        <LogIn className="mr-2 h-4 w-4" /> Giriş Yap
                       </>
                     )}
                   </Button>
@@ -183,18 +175,24 @@ export default function LoginPage() {
           <TabsContent value="register">
             <Card>
               <CardHeader>
-                <CardTitle>Create an account</CardTitle>
-                <CardDescription>Enter your information to create an account</CardDescription>
+                <CardTitle>Hesap oluştur</CardTitle>
+                <CardDescription>Hesap oluşturmak için bilgilerinizi girin</CardDescription>
               </CardHeader>
               <form onSubmit={handleRegister}>
                 <CardContent className="space-y-4">
+                  {registerError && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{registerError}</AlertDescription>
+                    </Alert>
+                  )}
                   <div className="space-y-2">
-                    <Label htmlFor="register-name">Name</Label>
+                    <Label htmlFor="register-name">İsim</Label>
                     <Input
                       id="register-name"
                       placeholder="John Doe"
                       value={registerName}
                       onChange={(e) => setRegisterName(e.target.value)}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -209,7 +207,7 @@ export default function LoginPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
+                    <Label htmlFor="register-password">Şifre</Label>
                     <Input
                       id="register-password"
                       type="password"
@@ -219,7 +217,7 @@ export default function LoginPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Label htmlFor="confirm-password">Şifre Tekrar</Label>
                     <Input
                       id="confirm-password"
                       type="password"
@@ -232,10 +230,10 @@ export default function LoginPage() {
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (
-                      "Creating account..."
+                      "Hesap oluşturuluyor..."
                     ) : (
                       <>
-                        <UserPlus className="mr-2 h-4 w-4" /> Create Account
+                        <UserPlus className="mr-2 h-4 w-4" /> Hesap Oluştur
                       </>
                     )}
                   </Button>
@@ -246,7 +244,7 @@ export default function LoginPage() {
         </Tabs>
 
         <div className="mt-4 text-center text-sm text-muted-foreground">
-          <p>Admin login: admin@sharebin.com / any password</p>
+          <p>Admin giriş: admin@sharebin.com / herhangi bir şifre</p>
         </div>
       </div>
     </div>

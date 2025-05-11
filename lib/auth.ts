@@ -53,21 +53,10 @@ export async function registerUser(name: string, email: string, password: string
   try {
     const lowerEmail = email.toLowerCase()
 
-    // Email doğrulama
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(lowerEmail)) {
-      return { success: false, error: "Geçerli bir email adresi giriniz" }
-    }
-
-    // Şifre doğrulama
-    if (password.length < 6) {
-      return { success: false, error: "Şifre en az 6 karakter olmalıdır" }
-    }
-
     // Check if user already exists
     const existingUser = await getUserByEmail(lowerEmail)
     if (existingUser) {
-      return { success: false, error: "Bu email adresi ile kayıtlı bir kullanıcı zaten var" }
+      return { success: false, error: "User already exists" }
     }
 
     // Create new user
@@ -95,23 +84,22 @@ export async function registerUser(name: string, email: string, password: string
     return { success: true, user: { ...userData, password: undefined } }
   } catch (error) {
     console.error("Registration error:", error)
-    return { success: false, error: "Kayıt işlemi sırasında bir hata oluştu" }
+    return { success: false, error: "Failed to register user" }
   }
 }
 
 // Login user
 export async function loginUser(email: string, password: string) {
   try {
-    const lowerEmail = email.toLowerCase()
-    const user = await getUserByEmail(lowerEmail)
+    const user = await getUserByEmail(email.toLowerCase())
 
     if (!user) {
-      return { success: false, error: "Bu email adresi ile kayıtlı kullanıcı bulunamadı" }
+      return { success: false, error: "Invalid email or password" }
     }
 
     const hashedPassword = await hash(password)
     if (user.password !== hashedPassword) {
-      return { success: false, error: "Hatalı şifre girdiniz" }
+      return { success: false, error: "Invalid email or password" }
     }
 
     // Create session
@@ -148,7 +136,7 @@ export async function loginUser(email: string, password: string) {
     return { success: true, user: { ...user, password: undefined } }
   } catch (error) {
     console.error("Login error:", error)
-    return { success: false, error: "Giriş sırasında bir hata oluştu" }
+    return { success: false, error: "Failed to login" }
   }
 }
 

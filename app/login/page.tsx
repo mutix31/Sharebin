@@ -32,22 +32,9 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [registerError, setRegisterError] = useState<string | null>(null)
 
-  // handleLogin fonksiyonunu güncelleyelim
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoginError(null)
-
-    // Form doğrulama
-    if (!loginEmail.trim()) {
-      setLoginError("Email adresi boş olamaz")
-      return
-    }
-
-    if (!loginPassword.trim()) {
-      setLoginError("Şifre boş olamaz")
-      return
-    }
-
     setIsLoading(true)
 
     try {
@@ -61,15 +48,10 @@ export default function LoginPage() {
 
       if (!data.success) {
         setLoginError(data.error || "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.")
-        toast({
-          title: "Giriş başarısız",
-          description: data.error || "Lütfen bilgilerinizi kontrol edin",
-          variant: "destructive",
-        })
       } else {
         toast({
           title: "Giriş başarılı",
-          description: `Hoş geldiniz, ${data.user.name || data.user.email.split("@")[0]}!`,
+          description: "Hoş geldiniz!",
         })
 
         // Başarılı girişten sonra yönlendirme
@@ -78,41 +60,14 @@ export default function LoginPage() {
       }
     } catch (error) {
       setLoginError("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.")
-      toast({
-        title: "Bağlantı hatası",
-        description: "Sunucuya bağlanırken bir hata oluştu. Lütfen internet bağlantınızı kontrol edin.",
-        variant: "destructive",
-      })
     } finally {
       setIsLoading(false)
     }
   }
 
-  // handleRegister fonksiyonunu güncelleyelim
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setRegisterError(null)
-
-    // Form doğrulama
-    if (!registerName.trim()) {
-      setRegisterError("İsim boş olamaz")
-      return
-    }
-
-    if (!registerEmail.trim()) {
-      setRegisterError("Email adresi boş olamaz")
-      return
-    }
-
-    if (!registerPassword.trim()) {
-      setRegisterError("Şifre boş olamaz")
-      return
-    }
-
-    if (registerPassword.length < 6) {
-      setRegisterError("Şifre en az 6 karakter olmalıdır")
-      return
-    }
 
     if (registerPassword !== confirmPassword) {
       setRegisterError("Şifreler eşleşmiyor. Lütfen kontrol edin.")
@@ -136,16 +91,10 @@ export default function LoginPage() {
 
       if (!data.success) {
         setRegisterError(data.error || "Kayıt başarısız. Lütfen bilgilerinizi kontrol edin.")
-        toast({
-          title: "Kayıt başarısız",
-          description: data.error || "Lütfen farklı bir email adresi deneyin",
-          variant: "destructive",
-        })
       } else {
         toast({
           title: "Kayıt başarılı",
           description: "Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.",
-          variant: "success",
         })
 
         // Auto-fill login form
@@ -157,11 +106,6 @@ export default function LoginPage() {
       }
     } catch (error) {
       setRegisterError("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.")
-      toast({
-        title: "Bağlantı hatası",
-        description: "Sunucuya bağlanırken bir hata oluştu. Lütfen internet bağlantınızı kontrol edin.",
-        variant: "destructive",
-      })
     } finally {
       setIsLoading(false)
     }

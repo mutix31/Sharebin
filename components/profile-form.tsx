@@ -27,6 +27,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Form doğrulama
+    if (!name.trim()) {
+      toast({
+        title: "Hata",
+        description: "İsim alanı boş olamaz",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -39,6 +50,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       toast({
         title: "Profil güncellendi",
         description: "Profil bilgileriniz başarıyla güncellendi",
+        variant: "success",
       })
 
       router.refresh()

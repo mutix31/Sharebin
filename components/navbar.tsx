@@ -32,33 +32,56 @@ export function Navbar() {
   const router = useRouter()
   const { toast } = useToast()
 
+  // useEffect içinde session değişikliğini izleyelim
   useEffect(() => {
+    let isFirstLoad = true
+
     async function fetchSession() {
       try {
         const res = await fetch("/api/auth/session")
         const data = await res.json()
+
+        // Eğer önceden oturum yoktu ve şimdi varsa, giriş yapılmış demektir
+        if (!isFirstLoad && !session?.authenticated && data.authenticated) {
+          toast({
+            title: "Giriş yapıldı",
+            description: `Hoş geldiniz, ${data.user?.name || data.user?.email?.split("@")[0] || "Kullanıcı"}!`,
+          })
+        }
+
         setSession(data)
       } catch (error) {
         console.error("Failed to fetch session:", error)
       } finally {
         setIsLoading(false)
+        isFirstLoad = false
       }
     }
 
     fetchSession()
-  }, [])
 
+    // Periyodik olarak session kontrolü yapalım
+    const interval = setInterval(fetchSession, 60000) // Her dakika kontrol et
+
+    return () => clearInterval(interval)
+  }, [toast, session])
+
+  // handleLogout fonksiyonunu güncelleyelim
   const handleLogout = async () => {
     try {
+      const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "Kullanıcı"
       await fetch("/api/auth/logout", { method: "POST" })
       setSession({ authenticated: false })
-      toast({ title: "Başarıyla çıkış yapıldı" })
+      toast({
+        title: "Çıkış yapıldı",
+        description: `Güle güle, ${userName}! Tekrar bekleriz.`,
+      })
       router.push("/")
       router.refresh()
     } catch (error) {
       toast({
         title: "Çıkış başarısız",
-        description: "Çıkış yaparken bir hata oluştu",
+        description: "Çıkış yaparken bir hata oluştu. Lütfen tekrar deneyin.",
         variant: "destructive",
       })
     }

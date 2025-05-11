@@ -19,6 +19,7 @@ export function UrlShortener() {
   const { toast } = useToast()
   const router = useRouter()
 
+  // handleSubmit fonksiyonunu güncelleyelim
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -31,9 +32,12 @@ export function UrlShortener() {
       return
     }
 
-    // Basic URL validation
+    // Daha gelişmiş URL doğrulama
     try {
-      new URL(url) // Will throw if invalid URL
+      const urlObj = new URL(url)
+      if (!["http:", "https:"].includes(urlObj.protocol)) {
+        throw new Error("Geçersiz protokol")
+      }
     } catch (error) {
       toast({
         title: "Geçersiz URL",
@@ -55,6 +59,7 @@ export function UrlShortener() {
         toast({
           title: "URL kısaltıldı",
           description: "URL başarıyla kısaltıldı",
+          variant: "success",
         })
 
         // Refresh the dashboard to show the new shortened URL

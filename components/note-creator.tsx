@@ -23,13 +23,23 @@ export function NoteCreator() {
   const { toast } = useToast()
   const router = useRouter()
 
+  // handleSubmit fonksiyonunu güncelleyelim
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim()) {
       toast({
-        title: "Missing information",
-        description: "Please provide both a title and content for your note",
+        title: "Başlık gerekli",
+        description: "Lütfen notunuz için bir başlık girin",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!content.trim()) {
+      toast({
+        title: "İçerik gerekli",
+        description: "Lütfen notunuz için içerik girin",
         variant: "destructive",
       })
       return
@@ -54,19 +64,20 @@ export function NoteCreator() {
         localStorage.setItem("myUploads", JSON.stringify(myUploads))
 
         toast({
-          title: "Note created",
-          description: "Your note has been created successfully",
+          title: "Not oluşturuldu",
+          description: "Notunuz başarıyla oluşturuldu",
+          variant: "success",
         })
 
         // Refresh the dashboard to show the new note
         router.refresh()
       } else {
-        throw new Error(result.error || "Failed to create note")
+        throw new Error(result.error || "Not oluşturulamadı")
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        title: "Hata",
+        description: error instanceof Error ? error.message : "Bir şeyler yanlış gitti",
         variant: "destructive",
       })
     } finally {

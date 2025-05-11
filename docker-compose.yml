@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  sharebin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-secret-key-change-this-in-production
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN}
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data

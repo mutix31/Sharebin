@@ -1,17 +1,33 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileIcon, FileText, Trash2, Link } from "lucide-react"
+import { FileIcon, FileText, Trash2, Link, AlertTriangle } from "lucide-react"
 import NextLink from "next/link"
 import { getUserUploads, getUserShortUrls } from "@/app/actions/upload-actions"
 import { DeleteButton } from "@/components/delete-button"
 import { requireAuth } from "@/lib/auth"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default async function DashboardPage() {
   const session = await requireAuth()
-  const { files, notes } = await getUserUploads()
-  const urlsResult = await getUserShortUrls()
-  const urls = urlsResult.success ? urlsResult.urls : []
+
+  // Hata yakalama ile veri alma
+  let files = []
+  let notes = []
+  let urls = []
+  let fetchError = null
+
+  try {
+    const uploadsResult = await getUserUploads()
+    files = uploadsResult.files || []
+    notes = uploadsResult.notes || []
+
+    const urlsResult = await getUserShortUrls()
+    urls = urlsResult.success ? urlsResult.urls : []
+  } catch (error) {
+    console.error("Error fetching user data:", error)
+    fetchError = "Verileriniz yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin."
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -21,6 +37,13 @@ export default async function DashboardPage() {
           Welcome, {session.name || session.email}. View and manage your uploaded files and notes.
         </p>
       </div>
+
+      {fetchError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{fetchError}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="max-w-5xl mx-auto">
         <Tabs defaultValue="files" className="w-full">

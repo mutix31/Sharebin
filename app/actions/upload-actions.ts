@@ -193,6 +193,12 @@ async function incrementViewAndCheckAccess(id: string, type: "file" | "note") {
     if (!itemBlob) return { success: false, error: "Item not found" }
 
     const response = await fetch(itemBlob.url)
+
+    // Fetch başarısız olursa
+    if (!response.ok) {
+      return { success: false, error: `Failed to fetch ${type} data: ${response.statusText}` }
+    }
+
     const data = await response.json()
 
     // Süresi dolmuş mu kontrol et
@@ -225,6 +231,11 @@ async function incrementViewAndCheckAccess(id: string, type: "file" | "note") {
 // Function to get a specific file by ID
 export async function getFileById(id: string) {
   try {
+    // ID formatını kontrol et
+    if (!id || typeof id !== "string" || id.length < 5) {
+      return { expired: true, error: "Invalid file ID" }
+    }
+
     const result = await incrementViewAndCheckAccess(id, "file")
 
     if (!result.success) {
@@ -245,6 +256,11 @@ export async function getFileById(id: string) {
 // Function to get a specific note by ID
 export async function getNoteById(id: string) {
   try {
+    // ID formatını kontrol et
+    if (!id || typeof id !== "string" || id.length < 5) {
+      return { expired: true, error: "Invalid note ID" }
+    }
+
     const result = await incrementViewAndCheckAccess(id, "note")
 
     if (!result.success) {
@@ -282,6 +298,13 @@ export async function getUserUploads() {
       if (blob.pathname.startsWith("metadata/")) {
         try {
           const response = await fetch(blob.url)
+
+          // Fetch başarısız olursa, bu dosyayı atla
+          if (!response.ok) {
+            console.error(`Failed to fetch metadata: ${response.statusText}`)
+            continue
+          }
+
           const metadata = await response.json()
 
           // Dosya süresi dolmamış olanları dahil et
@@ -297,6 +320,13 @@ export async function getUserUploads() {
       } else if (blob.pathname.startsWith("notes/")) {
         try {
           const response = await fetch(blob.url)
+
+          // Fetch başarısız olursa, bu notu atla
+          if (!response.ok) {
+            console.error(`Failed to fetch note: ${response.statusText}`)
+            continue
+          }
+
           const noteData = await response.json()
 
           // Not süresi dolmamış olanları dahil et
@@ -347,6 +377,13 @@ export async function getAllUploads() {
       if (blob.pathname.startsWith("metadata/")) {
         try {
           const response = await fetch(blob.url)
+
+          // Fetch başarısız olursa, bu dosyayı atla
+          if (!response.ok) {
+            console.error(`Failed to fetch metadata: ${response.statusText}`)
+            continue
+          }
+
           const metadata = await response.json()
           files.push(metadata)
         } catch (error) {
@@ -355,6 +392,13 @@ export async function getAllUploads() {
       } else if (blob.pathname.startsWith("notes/")) {
         try {
           const response = await fetch(blob.url)
+
+          // Fetch başarısız olursa, bu notu atla
+          if (!response.ok) {
+            console.error(`Failed to fetch note: ${response.statusText}`)
+            continue
+          }
+
           const noteData = await response.json()
           notes.push(noteData)
         } catch (error) {
@@ -498,6 +542,13 @@ export async function getAllUsers() {
     for (const blob of blobs) {
       try {
         const response = await fetch(blob.url)
+
+        // Fetch başarısız olursa, bu kullanıcıyı atla
+        if (!response.ok) {
+          console.error(`Failed to fetch user data: ${response.statusText}`)
+          continue
+        }
+
         const userData = await response.json()
 
         // Remove password before sending to client
@@ -567,6 +618,13 @@ export async function updateUser(
     for (const blob of blobs) {
       try {
         const response = await fetch(blob.url)
+
+        // Fetch başarısız olursa, bu kullanıcıyı atla
+        if (!response.ok) {
+          console.error(`Failed to fetch user data: ${response.statusText}`)
+          continue
+        }
+
         const u = await response.json()
         if (u.id === userId) {
           userBlob = blob
@@ -606,6 +664,13 @@ export async function updateUser(
       for (const blob of sessionBlobs) {
         try {
           const response = await fetch(blob.url)
+
+          // Fetch başarısız olursa, bu session'ı atla
+          if (!response.ok) {
+            console.error(`Failed to fetch session data: ${response.statusText}`)
+            continue
+          }
+
           const sessionData = await response.json()
 
           if (sessionData.userId === userId) {
@@ -706,6 +771,11 @@ export async function createShortUrl(originalUrl: string) {
 // Kısaltılmış URL'yi çözümleme
 export async function resolveShortUrl(shortCode: string) {
   try {
+    // Kısa kod formatını kontrol et
+    if (!shortCode || typeof shortCode !== "string" || shortCode.length < 3) {
+      return { success: false, error: "Invalid short code" }
+    }
+
     const { blobs } = await list({ prefix: "urls/" })
     const urlBlob = blobs.find((blob) => blob.pathname === `urls/${shortCode}.json`)
 
@@ -714,6 +784,12 @@ export async function resolveShortUrl(shortCode: string) {
     }
 
     const response = await fetch(urlBlob.url)
+
+    // Fetch başarısız olursa
+    if (!response.ok) {
+      return { success: false, error: `Failed to fetch URL data: ${response.statusText}` }
+    }
+
     const urlData = await response.json()
 
     // Ziyaret sayacını artır
@@ -759,6 +835,13 @@ export async function getUserShortUrls() {
     for (const blob of blobs) {
       try {
         const response = await fetch(blob.url)
+
+        // Fetch başarısız olursa, bu URL'yi atla
+        if (!response.ok) {
+          console.error(`Failed to fetch URL data: ${response.statusText}`)
+          continue
+        }
+
         const urlData = await response.json()
 
         if (isAdmin || urlData.userId === session.userId) {

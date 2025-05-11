@@ -61,8 +61,16 @@ export function FileUpload() {
     setFileUrl(null)
   }
 
+  // handleUpload fonksiyonunu güncelleyelim
   const handleUpload = async () => {
-    if (!file) return
+    if (!file) {
+      toast({
+        title: "Dosya seçilmedi",
+        description: "Lütfen bir dosya seçin",
+        variant: "destructive",
+      })
+      return
+    }
 
     try {
       setUploading(true)
@@ -96,19 +104,20 @@ export function FileUpload() {
         localStorage.setItem("myUploads", JSON.stringify(myUploads))
 
         toast({
-          title: "Upload successful",
-          description: "Your file has been uploaded successfully",
+          title: "Yükleme başarılı",
+          description: "Dosyanız başarıyla yüklendi",
+          variant: "success",
         })
 
         // Refresh the dashboard to show the new file
         router.refresh()
       } else {
-        throw new Error(result.error || "Upload failed")
+        throw new Error(result.error || "Yükleme başarısız oldu")
       }
     } catch (error) {
       toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        title: "Yükleme başarısız",
+        description: error instanceof Error ? error.message : "Bir şeyler yanlış gitti",
         variant: "destructive",
       })
     } finally {
